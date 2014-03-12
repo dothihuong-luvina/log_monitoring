@@ -1,4 +1,4 @@
-package test.groovy.common;
+package test.groovy.test.common;
 import java.io.File;
 public class TestUTCommon {
 	public boolean compareData(String file_path1,String file_path2){

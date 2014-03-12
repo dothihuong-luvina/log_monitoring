@@ -1,8 +1,12 @@
-package test.groovy.input;
+package test.groovy.test.input;
 import javax.inject.Inject;
 import static org.junit.Assert.*;
 import static org.ops4j.pax.exam.CoreOptions.*;
 
+import org.jruby.embed.LocalContextScope;
+import org.jruby.embed.LocalVariableBehavior;
+import org.jruby.embed.ScriptingContainer;
+import org.jruby.embed.osgi.OSGiScriptingContainer;
 import org.junit.Test;
 import org.junit.After;
 import org.junit.Before;
@@ -16,13 +20,14 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.junit.runner.JUnitCore;
+import org.osgi.framework.Bundle;
 import org.osgi.service.cm.ManagedService;
 import org.wiperdog.logstat.service.LogStat;
-import test.groovy.common.TestUTCommon;
+import test.groovy.test.common.TestUTCommon;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
-public class Log4jTest {
-	public Log4jTest() {
+public class SocketTest {
+	public SocketTest() {
 	}
 
 	@Inject
@@ -55,37 +60,32 @@ public class Log4jTest {
 	String line;
 	String result;
 	TestUTCommon test_common = new TestUTCommon();
-	/**
-	 * Note :  Run this project src\test\resources\data_test\input\testLog4j\Log4jEx (A log4j server to send
-	 * logs to logstat via socket - remember to add log4j.jar to build Log4jEx path) before testing   
-	 */
 	
+	/**
+	 * Run this file : \src\test\resources\data_test\input\testSocket\test_socket.rb before test by commandline
+	 *   ruby pax-exam-sample-logstat\src\test\resources\data_test\input\testSocket\test_socket.rb
+	 * 
+	 */
 	@Before
 	public void prepare() {
 		input_conf = new HashMap<String, Object>();
 		output_conf = new HashMap<String, Object>();
 		filter = new HashMap<String, Object>();
 		conf = new HashMap<String, Object>();
-		output_conf.put("type", "file");		
+		output_conf.put("type", "file");
 		result = "";
 		// filter data of log
 		filter = [
-			"filter_type" : "",
+			"filter_type" : "match_field",
 			"filter_conf" : [
-				"priority" : "(ERROR)"
+				"message" : '^.*$'
 			]
 		]
-		// get data of log4j
-		input_conf.put("input_type", "log4j");
+		// get data of socket log
+		input_conf.put("input_type", "socket");
+
 		try {
 			svc = context.getService(context.getServiceReference(LogStat.class.getName()));
-//			def cmd_run_log4j = ' cmd /c cd "src/test/resources/data_test/Log4jEx/src/com/java" & javac -cp .;log4j-1.2.14.jar Log4jSocketAppenderExample.java '
-//			def proc = cmd_run_log4j.execute();
-//			proc.waitFor();
-//			//cmd_run_log4j = 'start cmd /c cd "src/test/resources/data_test/Log4jEx/src/com/java" & cmd /c java -cp .;log4j-1.2.14.jar Log4jSocketAppenderExample '
-//			cmd_run_log4j = 'cmd /c java -cp  .;src/test/resources/data_test/Log4jEx/src/com/java;log4j-1.2.14.jar;. Log4jSocketAppenderExample '
-//			proc = cmd_run_log4j.execute();
-
 		} catch (Exception e) {
 			e.printStackTrace()
 		}
@@ -100,21 +100,22 @@ public class Log4jTest {
 	 * Func will be get default of timeout for run.
 	 * Expected: return data contains message of log level err. 
 	 */
-   @Test
-	public void testLog4j_01() {
-		input_conf.put("port", 2808);
+	@Test
+	public void testSocket_01() {
+		input_conf.put("port", 2809);
+		input_conf.put("timeout", 15);
+		def outFile = ["path":"src/test/resources/data_test/input/testSocket/output/testSocket_01.log"]
+		output_conf.put("config", outFile)
+		test_common.cleanData("src/test/resources/data_test/input/testSocket/output/testSocket_01.log")
 		conf.put("input",input_conf);
 		conf.put("filter",filter);
 		conf.put("output",output_conf);
-		def outFile = ["path":"src/test/resources/data_test/input/testLog4j/output/testLog4j_01.log"]
-		output_conf.put("config", outFile)
-		test_common.cleanData("src/test/resources/data_test/input/testLog4j/output/testLog4j_01.log")		
+
 		svc.runLogStat(conf);
 		// result data
-		result = readFileOutput("src/test/resources/data_test/input/testLog4j/output/testLog4j_01.log");
+		result = readFileOutput("src/test/resources/data_test/input/testSocket/output/testSocket_01.log");
 		assertNotNull(result)
-		assertTrue(result.contains('"message"=>"Log4j error message!!"'))
-		//assertTrue(result.contains('"message"=>"Log4j debug message!!"'))
+		assertTrue(result.contains('[Socket] : This is a log message from socket !'))
 		Thread.sleep(3000)
 	}
 
@@ -122,21 +123,22 @@ public class Log4jTest {
 	 * Check output with input config contains two variable is port and timeout.
 	 * Expected: return data contains message of log level err.
 	 */
-	//@Test
-	public void testLog4j_02() {
-		input_conf.put("port", 2808);
+	@Test
+	public void testSocket_02() {
+		input_conf.put("port", 2809);
 		input_conf.put("timeout", 15);
-		def outFile = ["path":"src/test/resources/data_test/input/testLog4j/output/testLog4j_02.log"]
+		def outFile = ["path":"src/test/resources/data_test/input/testSocket/output/testSocket_02.log"]
 		output_conf.put("config", outFile)
+		test_common.cleanData("src/test/resources/data_test/input/testSocket/output/testSocket_02.log")		
 		conf.put("input",input_conf);
 		conf.put("filter",filter);
 		conf.put("output",output_conf);
-		test_common.cleanData("src/test/resources/data_test/input/testLog4j/output/testLog4j_02.log")		
+
 		svc.runLogStat(conf)
 		// result data
-		result = readFileOutput("src/test/resources/data_test/input/testLog4j/output/testLog4j_02.log");
+		result = readFileOutput("src/test/resources/data_test/input/testSocket/output/testSocket_02.log");
 		assertNotNull(result)
-		assertTrue(result.contains('"message"=>"Log4j error message!!"'))
+		assertTrue(result.contains('[Socket] : This is a log message from socket !'))
 		Thread.sleep(3000)
 	}
 
@@ -144,22 +146,23 @@ public class Log4jTest {
 	 * Check output with input config contains two variable is port and host
 	 * Expected: return data contains message of log level err.
 	 */
-	//@Test
-	public void testLog4j_03() {
-		input_conf.put("port", 2808);
+	@Test
+	public void testSocket_03() {
+		input_conf.put("port", 2809);
 		input_conf.put("host", "localhost");
-		input_conf.put("timeout", 15);		
-		def outFile = ["path":"src/test/resources/data_test/input/testLog4j/output/testLog4j_03.log"]
+		def outFile = ["path":"src/test/resources/data_test/input/testSocket/output/testSocket_03.log"]
 		output_conf.put("config", outFile)
+		test_common.cleanData("src/test/resources/data_test/input/testSocket/output/testSocket_03.log")
+
 		conf.put("input",input_conf);
 		conf.put("filter",filter);
 		conf.put("output",output_conf);
-		test_common.cleanData("src/test/resources/data_test/input/testLog4j/output/testLog4j_03.log")		
+
 		svc.runLogStat(conf)
 		// result data
-		result = readFileOutput("src/test/resources/data_test/input/testLog4j/output/testLog4j_03.log");
+		result = readFileOutput("src/test/resources/data_test/input/testSocket/output/testSocket_03.log");
 		assertNotNull(result)
-		assertTrue(result.contains('"message"=>"Log4j error message!!"'))
+		assertTrue(result.contains('[Socket] : This is a log message from socket !'))
 		Thread.sleep(3000)
 	}
 
@@ -167,81 +170,88 @@ public class Log4jTest {
 	 * Check output with input config contains all of variable is port, timeout and host
 	 * Expected: return data contains message of log level err.
 	 */
-	//@Test
-	public void testLog4j_04() {
-		input_conf.put("port", 2808);
+	@Test
+	public void testSocket_04() {
+		input_conf.put("port", 2809);
 		input_conf.put("timeout", 15);
 		input_conf.put("host", "localhost");
-		def outFile = ["path":"src/test/resources/data_test/input/testLog4j/output/testLog4j_04.log"]
+		def outFile = ["path":"src/test/resources/data_test/input/testSocket/output/testSocket_04.log"]
 		output_conf.put("config", outFile)
+		test_common.cleanData("src/test/resources/data_test/input/testSocket/output/testSocket_04.log")
+
 		conf.put("input",input_conf);
 		conf.put("filter",filter);
 		conf.put("output",output_conf);
-		test_common.cleanData("src/test/resources/data_test/input/testLog4j/output/testLog4j_04.log")		
+
 		svc.runLogStat(conf)
 		// result data
-		result = readFileOutput("src/test/resources/data_test/input/testLog4j/output/testLog4j_04.log");
+		result = readFileOutput("src/test/resources/data_test/input/testSocket/output/testSocket_04.log");
 		assertNotNull(result)
-		assertTrue(result.contains('"message"=>"Log4j error message!!"'))
+		assertTrue(result.contains('[Socket] : This is a log message from socket !'))
 		Thread.sleep(3000)
 	}
 
 	/**
 	 * Check output with input config contains one variable is port and value of port is out of range
-	 * Expected: Generate error message : "[Logstat]: port out of range:66666" 
+	 * Expected: return data is null.
 	 */
 	@Test
-	public void testLog4j_05() {
+	public void testSocket_05() {
 		input_conf.put("port", 66666);
 		input_conf.put("timeout", 15);
-		def outFile = ["path":"src/test/resources/data_test/input/testLog4j/output/testLog4j_05.log"]
+		def outFile = ["path":"src/test/resources/data_test/input/testSocket/output/testSocket_05.log"]
 		output_conf.put("config", outFile)
-		test_common.cleanData("src/test/resources/data_test/input/testLog4j/output/testLog4j_05.log")		
+		test_common.cleanData("src/test/resources/data_test/input/testSocket/output/testSocket_05.log")
+
 		conf.put("input",input_conf);
 		conf.put("filter",filter);
 		conf.put("output",output_conf);
 		svc.runLogStat(conf)
-		assertFalse((new File("src/test/resources/data_test/input/testLog4j/output/testLog4j_05.log")).exists())
+		
+		assertFalse((new File("src/test/resources/data_test/input/testSocket/output/testSocket_05.log")).exists())
 		Thread.sleep(3000)
 	}
 
 	/**
 	 * Check output with input config contains port is null
-	 * Expected:  Generate error message : "[Logstat]: Port is required" 
+	 * Expected: return data is null.
 	 */
-	//@Test
-	public void testLog4j_06() {
+	@Test
+	public void testSocket_06() {
 		input_conf.put("port", null);
 		input_conf.put("timeout", 15);
-		def outFile = ["path":"src/test/resources/data_test/input/testLog4j/output/testLog4j_06.log"]
+		def outFile = ["path":"src/test/resources/data_test/input/testSocket/output/testSocket_06.log"]
 		output_conf.put("config", outFile)
+		test_common.cleanData("src/test/resources/data_test/input/testSocket/output/testSocket_06.log")
+
 		conf.put("input",input_conf);
 		conf.put("filter",filter);
 		conf.put("output",output_conf);
-		test_common.cleanData("src/test/resources/data_test/input/testLog4j/output/testLog4j_06.log")		
+
 		svc.runLogStat(conf)
-		assertFalse((new File("src/test/resources/data_test/input/testLog4j/output/testLog4j_06.log")).exists())
+		assertFalse((new File("src/test/resources/data_test/input/testSocket/output/testSocket_06.log")).exists())
 		Thread.sleep(3000)
 	}
 
 	/**
-	 * Check output with input config contains two variable is port, host. Value of host does not exist
-	 * host will be set default to localhost.
-	 * Expected: return data from localhost
+	 * Check output with input config contains two variable is port, host. Value of host does not exist.
+	 * Expected: return data is null.
 	 */
-	//@Test
-	public void testLog4j_07() {
-		input_conf.put("port", 2808);
-		input_conf.put("timeout", 15);
-		input_conf.put("host", "");
-		def outFile = ["path":"src/test/resources/data_test/input/testLog4j/output/testLog4j_07.log"]
+	@Test
+	public void testSocket_07() {
+		input_conf.put("port", 2809);
+		input_conf.put("port", 15);
+		input_conf.put("host", "10.0.1.289");
+		def outFile = ["path":"src/test/resources/data_test/input/testSocket/output/testSocket_07.log"]
 		output_conf.put("config", outFile)
+		test_common.cleanData("src/test/resources/data_test/input/testSocket/output/testSocket_07.log")
+
 		conf.put("input",input_conf);
 		conf.put("filter",filter);
 		conf.put("output",output_conf);
-		test_common.cleanData("src/test/resources/data_test/input/testLog4j/output/testLog4j_07.log")		
+
 		svc.runLogStat(conf)
-		assertTrue((new File("src/test/resources/data_test/input/testLog4j/output/testLog4j_07.log")).exists())
+		assertFalse((new File("src/test/resources/data_test/input/testSocket/output/testSocket_07.log")).exists())
 		Thread.sleep(3000)
 	}
 
@@ -249,22 +259,24 @@ public class Log4jTest {
 	 * Check output with value of host is null.
 	 * Expected: return data contains message of log level err.
 	 */
-	//@Test
-	public void testLog4j_08() {
-		input_conf.put("port", 2808);
+	@Test
+	public void testSocket_08() {
+		input_conf.put("port", 2809);
 		input_conf.put("timeout", 15);
 		input_conf.put("host", null);
-		def outFile = ["path":"src/test/resources/data_test/input/testLog4j/output/testLog4j_08.log"]
+		def outFile = ["path":"src/test/resources/data_test/input/testSocket/output/testSocket_08.log"]
 		output_conf.put("config", outFile)
+		test_common.cleanData("src/test/resources/data_test/input/testSocket/output/testSocket_08.log")
+
 		conf.put("input",input_conf);
 		conf.put("filter",filter);
 		conf.put("output",output_conf);
-		test_common.cleanData("src/test/resources/data_test/input/testLog4j/output/testLog4j_08.log")		
+
 		svc.runLogStat(conf)
 		// result data
-		result = readFileOutput("src/test/resources/data_test/input/testLog4j/output/testLog4j_08.log");
+		result = readFileOutput("src/test/resources/data_test/input/testSocket/output/testSocket_08.log");
 		assertNotNull(result)
-		assertTrue(result.contains('"message"=>"Log4j error message!!"'))
+		assertTrue(result.contains('[Socket] : This is a log message from socket !'))
 		Thread.sleep(3000)
 	}
 
@@ -288,8 +300,9 @@ public class Log4jTest {
 			}
 			return output;
 		} catch (Exception ex) {
+//			ex.printStackTrace();
+//			throw ex;
 			System.out.println("No data output !");
 		}
 	}
 }
-

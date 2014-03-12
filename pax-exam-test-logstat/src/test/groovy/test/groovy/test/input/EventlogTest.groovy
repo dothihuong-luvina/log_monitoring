@@ -1,4 +1,4 @@
-package test.groovy.input;
+package test.groovy.test.input;
 import java.sql.Time;
 
 import javax.inject.Inject;
@@ -20,7 +20,7 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.junit.runner.JUnitCore;
 import org.osgi.service.cm.ManagedService;
 import org.wiperdog.logstat.service.LogStat;
-import test.groovy.common.TestUTCommon;
+import test.groovy.test.common.TestUTCommon;
 import java.util.Calendar;
 import java.util.Date;
 import java.text.SimpleDateFormat;

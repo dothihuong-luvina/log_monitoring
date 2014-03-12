@@ -1,4 +1,4 @@
-package test.groovy.input;
+package test.groovy.test.input;
 import javax.inject.Inject;
 import static org.junit.Assert.*;
 import static org.ops4j.pax.exam.CoreOptions.*;
