@@ -42,6 +42,10 @@ def getDataFromSocket(port,timeout,host)
     end
   rescue Exception => ex
     puts "[Logstat]  :  #{ex}"
+  ensure
+    if(!server.nil?)
+      server.close
+  end
   end
   finalData = Hash.new
   finalData["list_logs"] = listLogs
