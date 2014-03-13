@@ -1,4 +1,4 @@
-package test.groovy.filter;
+package test.groovy.test.filter;
 import javax.inject.Inject;
 import static org.junit.Assert.*;
 import static org.ops4j.pax.exam.CoreOptions.*;
@@ -20,7 +20,7 @@ import org.osgi.service.cm.ManagedService;
 import org.wiperdog.logstat.service.LogStat;
 import org.jruby.embed.InvokeFailedException;
 import org.jruby.embed.ScriptingContainer;
-import test.groovy.common.TestUTCommon;
+import test.groovy.test.common.TestUTCommon;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
