@@ -13,4 +13,4 @@ How to use :
 
         String logstatDir = "/path/to/logstat"
 	LogStat logstatService;
-        logstatService.runLogStat(logstatDir,configuraion)
+        logstatService(logstatDir,configuraion)
